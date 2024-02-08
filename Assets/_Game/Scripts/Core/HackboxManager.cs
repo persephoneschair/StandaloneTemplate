@@ -6,14 +6,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using UnityEngine;
-using static UnityEditor.Progress;
-using static UnityEngine.GraphicsBuffer;
+using QuestionManagement;
 
 public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
 {
-
+    public Member Operator;
 
     #region Presets & Themes
 
@@ -32,7 +30,7 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
         Choices,
         Grid
     }
-    public Hackbox.UI.Preset[] Presets;
+    public Preset[] Presets;
 
     #endregion
 
@@ -45,6 +43,7 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
 
     public void OnRoomConnected(string roomCode)
     {
+        MainMenuManager.Get.OnRoomConnected();
         DebugLog.Print($"CONNECTED TO ROOM {roomCode}", DebugLog.StyleOption.Bold, DebugLog.ColorOption.Green);
     }
 
@@ -83,6 +82,21 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     public void OnPingPong()
     {
 
+    }
+
+    public void ResetConnection()
+    {
+        foreach (Member mem in Host.AllMembers)
+            DeployInformationState(mem, InformationState.RoomDestroyed);
+
+        Invoke("InvokeReset", 0.1f);
+    }
+
+    private void InvokeReset()
+    {
+        Operator = null;
+        Host.Disconnect();
+        Host.Connect(true);
     }
 
 
@@ -138,12 +152,12 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
         return textInput;
     }
 
-    private UIComponent Choices(string eventName, string[] choiceOptions)
+    private UIComponent Choices(string eventName, string[] choiceOptions, bool multiSelect = false)
     {
-        return Choices(eventName, choiceOptions, PersistenceManager.HackboxConfig.DefaultChoicesSize);
+        return Choices(eventName, choiceOptions, PersistenceManager.HackboxConfig.DefaultChoicesSize, multiSelect);
     }
 
-    private UIComponent Choices(string eventName, string[] choiceOptions, int fontSize)
+    private UIComponent Choices(string eventName, string[] choiceOptions, int fontSize, bool multiSelect = false)
     {
         if (choiceOptions == null || choiceOptions.Length == 0)
             return null;
@@ -174,17 +188,18 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
 
         choices["choices"] = ch;
         choices.SetParameterValue("event", eventName);
+        choices.SetParameterValue("multiSelect", multiSelect);
         choices.SetStyleParameterValue("fontSize", $"{fontSize}px");
 
         return choices;
     }
 
-    private UIComponent Grid(string eventName, string[] gridOptions)
+    private UIComponent Grid(string eventName, string[] gridOptions, bool multiSelect = false)
     {
-        return Grid(eventName, gridOptions, PersistenceManager.HackboxConfig.DefaultGridColumns, PersistenceManager.HackboxConfig.DefaultGridGap, PersistenceManager.HackboxConfig.DefaultChoicesSize);
+        return Grid(eventName, gridOptions, PersistenceManager.HackboxConfig.DefaultGridColumns, PersistenceManager.HackboxConfig.DefaultGridGap, PersistenceManager.HackboxConfig.DefaultChoicesSize, multiSelect);
     }
 
-    private UIComponent Grid(string eventName, string[] gridOptions, int gridColumns, int gridGap, int fontSize)
+    private UIComponent Grid(string eventName, string[] gridOptions, int gridColumns, int gridGap, int fontSize, bool multiSelect)
     {
         if (gridOptions == null || gridOptions.Length == 0)
             return null;
@@ -215,6 +230,7 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
 
         grid["choices"] = ch;
         grid.SetParameterValue("event", eventName);
+        grid.SetParameterValue("multiSelect", multiSelect);
         grid.SetStyleParameterValue("fontSize", $"{fontSize}px");
         grid.SetStyleParameterValue("gridGap", $"{gridGap}px");
         grid.SetStyleParameterValue("gridColumns", gridColumns);
@@ -229,31 +245,63 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     /// <Summary>
     ///Build bespoke game states in here
     ///Set the enum in the State Deployment section
-    ///Not all enums require I bespoke state (see Generic welcome)
+    ///Not all enums require a bespoke state (see Member/Operator Welcome)
     ///Overloads are available in all default presets to change font sizes etc.
-    ///An example of a grid is given
+    ///Examples are provided that cover Simple Question, Choices, Grid, Multi-select Choices and Multi-select Grid
     /// </Summary>
-
-    private State ExampleGrid(string header, string questionLabel, string eventName, string[] options)
+    
+    private State SimpleQuestion(string header, string questionlabel, string eventName)
     {
         State s = GenerateDefaultState(header);
-        s.Add(Label(questionLabel));
-        s.Add(Grid(eventName, options));
+        s.Add(Label(questionlabel));
+        s.Add(TextInput(eventName));
         return s;
     }
 
-    private State GenericWelcome(string header, string displayMessage)
+    private State Choices(string header, string questionLabel, string eventName, string[] options, bool multiSelect = false)
+    {
+        State s = GenerateDefaultState(header);
+        s.Add(Label(questionLabel));
+        s.Add(Choices(eventName, options, multiSelect));
+        return s;
+    }
+
+    private State GridOrMultiGrid(string header, string questionLabel, string eventName, string[] options, bool multiSelect = false)
+    {
+        State s = GenerateDefaultState(header);
+        s.Add(Label(questionLabel));
+        s.Add(Grid(eventName, options, multiSelect));
+        return s;
+    }
+
+    private State GenericSingleMessage(string header, string displayMessage)
     {
         State s = GenerateDefaultState(header);
         s.Add(Label(displayMessage));
         return s;
     }
 
-    private State WipeoutGrid(string header, Question q, string eventName)
+    private State GenericMultiMessage(string header, string[] displayMessages)
     {
         State s = GenerateDefaultState(header);
-        s.Add(Label(q.QuestionText));
-        s.Add(Grid(eventName, q.Answers.Select(x => x.AnswerText).ToArray()));
+        foreach(string str in displayMessages)
+            s.Add(Label(str));
+        return s;
+    }
+
+    private State OperatorTestState(string header, string eventName)
+    {
+        State s = GenerateDefaultState(header);
+        s.Add(Label("This is a test state<br>Press the button below to return to standby mode"));
+        s.Add(Choices(eventName, new string[] { "End Test" }));
+        return s;
+    }
+
+    private State OperatorProgressGameplay(string header, string stateToProgressTo, string eventName)
+    {
+        State s = GenerateDefaultState(header);
+        s.Add(Label(stateToProgressTo));
+        s.Add(Choices(eventName, new string[] { "Progress Gameplay" }));
         return s;
     }
 
@@ -263,82 +311,202 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
 
     /// <Summary>
     ///Publicly called functions to deploy a state
-    /// Best practise would be to pre-determine states, add them to the enum in the State Build section
-    ///And then bind data to some global value in Question Manager
     ///This will need to be fine-tuned for games where there are inconsistent states between players
-    ///But in theory, this allows for states to be sent from anywhere with a simple Member and enum
+    ///But in theory, this allows for states to be sent from anywhere with just a Member, enum argument and some data
     /// </Summary>
-    /// 
-    public enum GameplayState
+    
+    public enum InformationState
     {
-        ExampleGrid,
+        RoomDestroyed,
         MemberWelcome,
         OperatorWelcome,
-        WipeoutGrid
+        GameIsFull,
+        GenericMessage
     };
 
-    public void DeployState(Member mem, GameplayState stateToDeploy)
+    public enum GameplayState
+    {
+        SimpleQ,
+        Choices,
+        MultiSelectChoices,
+        Grid,
+        MultiSelectGrid
+    };
+
+    public enum OperatorState
+    {
+        OperatorTest,
+        ProgressGameplay
+    };
+
+    public void DeployInformationState(Member mem, InformationState stateToDeploy, string message, string customHeader = "")
+    {
+        DeployInformationState(mem, stateToDeploy, new string[1] { message }, customHeader);
+    }
+
+    public void DeployInformationState(Member mem, InformationState stateToDeploy, string[] messages = null, string header = "")
     {
         State s = null;
         switch (stateToDeploy)
         {
-            case GameplayState.ExampleGrid:
-                s = ExampleGrid
-                    ("Example Grid",
-                    "Some question label binded to CurrentQuestion.string",
-                    stateToDeploy.ToString(),
-                    new string[] { "Drawn", "From", "Question", "Data" });
+
+            case InformationState.RoomDestroyed:
+                s = GenericSingleMessage("ROOM DESTROYED", "ROOM DESTROYED<br>PLEASE REFRESH YOUR BROWSER AND RECONNECT");
                 break;
 
-            case GameplayState.WipeoutGrid:
-                s = WipeoutGrid("q.CategoryText", new Question(), "wipeoutGrid");
+            case InformationState.MemberWelcome:
+                s = GenericSingleMessage("WELCOME", "Welcome to the game!");
                 break;
 
-            case GameplayState.MemberWelcome:
-                s = GenericWelcome("WELCOME", "Welcome to the game!");
+            case InformationState.OperatorWelcome:
+                s = GenericSingleMessage("OPERATOR", "You can control the game from this device");
                 break;
 
-            case GameplayState.OperatorWelcome:
-                s = GenericWelcome("OPERATOR", "You can control the game from this device");
+            case InformationState.GameIsFull:
+                s = GenericSingleMessage("GAME FULL", "The game has reached maximum capacity");
                 break;
 
+            case InformationState.GenericMessage:
+                s = GenericMultiMessage(string.IsNullOrEmpty(header) ? "MESSAGE" : header, messages);
+                break;
         }
         Host.UpdateMemberState(mem, s);
+    }
+
+    public void DeployGameplayState(Member mem, GameplayState stateToDeploy, Question question, string customHeader = "")
+    {
+        State s = null;
+
+        switch (stateToDeploy)
+        {
+            case GameplayState.SimpleQ:
+                s = SimpleQuestion
+                    ("Example Question",
+                    question.QuestionText,
+                    stateToDeploy.ToString());
+                break;
+
+            case GameplayState.Choices:
+                s = Choices
+                    ("Example Choices",
+                    question.QuestionText,
+                    stateToDeploy.ToString(),
+                    question.Answers.Select(x => x.AnswerText).ToArray());
+                break;
+
+            case GameplayState.MultiSelectChoices:
+                s = Choices
+                    ("Example Choices",
+                    question.QuestionText,
+                    stateToDeploy.ToString(),
+                    question.Answers.Select(x => x.AnswerText).ToArray(),
+                    true);
+                break;
+
+            case GameplayState.Grid:
+                s = GridOrMultiGrid
+                    ("Example Grid",
+                    question.QuestionText,
+                    stateToDeploy.ToString(),
+                    question.Answers.Select(x => x.AnswerText).ToArray());
+                break;
+
+            case GameplayState.MultiSelectGrid:
+                s = GridOrMultiGrid
+                    ("Example Grid",
+                    question.QuestionText,
+                    stateToDeploy.ToString(),
+                    question.Answers.Select(x => x.AnswerText).ToArray(),
+                    true);
+                break;
+        }
+        Host.UpdateMemberState(mem, s);
+    }
+
+    public void DeployOperatorState(OperatorState stateToDeploy, string customHeader = "")
+    {
+        State s = null;
+        switch (stateToDeploy)
+        {
+            case OperatorState.OperatorTest:
+                s = OperatorTestState("OPERATOR TEST", stateToDeploy.ToString());
+                break;
+
+            case OperatorState.ProgressGameplay:
+                s = OperatorProgressGameplay("OPERATOR", "BIND THIS INFORMATION BOX TO THE ACTION BUTTON ENUM", stateToDeploy.ToString());
+                break;
+        }
+        Host.UpdateMemberState(Operator, s);
     }
 
     #endregion
 
     #region Response Handling
 
-    public void HandleMemberJoins(Member mem)
+    private void HandleMemberJoins(Member mem)
     {
-        if(mem.Name == PersistenceManager.HackboxConfig.OperatorName)
+        if(mem.Name.ToUpperInvariant() == PersistenceManager.HackboxConfig.OperatorName.ToUpperInvariant() && Operator == null)
         {
-            DeployState(mem, GameplayState.OperatorWelcome);
+            Operator = mem;
+            DeployInformationState(Operator, InformationState.OperatorWelcome);
         }
         else
         {
-            DeployState(mem, GameplayState.MemberWelcome);
+            PlayerManager.Get.CreateNewPlayer(mem);
+            DeployInformationState(mem, PlayerManager.Get.Players.Count >= PersistenceManager.CurrentGameplayConfig.PlayerLimit ? InformationState.GameIsFull : InformationState.MemberWelcome);
         }            
     }
 
-    public void HandleResponse(Message msg)
+    private void HandleResponse(Message msg)
     {
-        GameplayState st;
-        if (Enum.TryParse(msg.Event, out st))
+        if (msg.Member == Operator)
+            HandleOperatorResponse(msg);
+        else
+            HandleGameplayResponse(msg);
+    }
+
+    private void HandleGameplayResponse(Message msg)
+    {
+        if (Enum.TryParse(msg.Event, out GameplayState st))
         {
+            //Player response handling logic goes in here
             switch (st)
             {
-                case GameplayState.ExampleGrid:
-                    Debug.Log(msg.Value);
+                case GameplayState.SimpleQ:
+                    break;
+
+                case GameplayState.Choices:
+                case GameplayState.Grid:
+                    break;
+
+                case GameplayState.MultiSelectChoices:
+                case GameplayState.MultiSelectGrid:
+                    break;                
+            }
+        }
+        else
+            // Handle parsing failure
+            Debug.LogError("Failed to parse enum value.");
+    }
+
+    private void HandleOperatorResponse(Message msg)
+    {
+        if (Enum.TryParse(msg.Event, out OperatorState st))
+        {
+            //Operator response handling logic goes in here
+            switch (st)
+            {
+                case OperatorState.OperatorTest:
+                    (MainMenuManager.Get.GetHackboxConfig() as HackboxConfigManager).OnEndTest();
+                    break;
+
+                case OperatorState.ProgressGameplay:
                     break;
             }
         }
         else
-        {
             // Handle parsing failure
             Debug.LogError("Failed to parse enum value.");
-        }
     }
 
     #endregion
@@ -348,8 +516,8 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     [Button(enabledMode: EButtonEnableMode.Playmode)]
     public void TestDeploy()
     {
-        foreach (Member m in Host.AllMembers)
-            DeployState(m, GameplayState.ExampleGrid);
+        /*foreach (Member m in Host.AllMembers)
+            DeployGameplayState(m, GameplayState.ExampleGridMulti);*/
     }
 
     #endregion

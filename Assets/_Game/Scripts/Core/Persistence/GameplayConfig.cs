@@ -13,6 +13,8 @@ public class GameplayConfig
         Epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 
+    #region Uneditable
+
     private Guid _id;
     public Guid ID
     {
@@ -37,6 +39,20 @@ public class GameplayConfig
         }
     }
 
+    private bool _isCurrent = true;
+    public bool IsCurrent
+    {
+        get { return _isCurrent; }
+        set
+        {
+            _isCurrent = value;
+        }
+    }
+
+    #endregion
+
+    #region Editable
+
     private string _configName = "Default";
     public string ConfigName
     {
@@ -48,17 +64,28 @@ public class GameplayConfig
         }
     }
 
-    private bool _isCurrent = true;
-    public bool IsCurrent
+    private int _playerLimit = 40;
+    public int PlayerLimit
     {
-        get { return _isCurrent; }
+        get { return _playerLimit; }
         set
         {
-            _isCurrent = value;
+            _playerLimit = value;
+            OnPropertyChanged();
         }
     }
 
-    private float _timeAvailable = 180f;
+    private bool _shuffleQuestionOrder = false;
+    public bool ShuffleQuestionOrder
+    {
+        get { return _shuffleQuestionOrder; }
+        set
+        {
+            _shuffleQuestionOrder = value;
+        }
+    }
+
+    private float _timeAvailable = 15f;
     public float TimeAvailable
     {
         get { return _timeAvailable; }
@@ -68,6 +95,8 @@ public class GameplayConfig
             OnPropertyChanged();
         }
     }
+
+    #endregion
 
 
     public void OnPropertyChanged()

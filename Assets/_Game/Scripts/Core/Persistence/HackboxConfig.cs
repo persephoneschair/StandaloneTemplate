@@ -75,6 +75,18 @@ public class HackboxConfig
         }
     }
 
+    private bool _createRoomOnStartup = true;
+    public bool CreateRoomOnStartup
+    {
+        get { return _createRoomOnStartup; }
+        set
+        {
+            _createRoomOnStartup = value;
+            HackboxManager.Get.Host.ConnectOnStart = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool _requireTwitch = false;
     public bool RequireTwitch
     {
@@ -82,6 +94,7 @@ public class HackboxConfig
         set
         {
             _requireTwitch = value;
+            HackboxManager.Get.Host.TwitchRequired = value;
             OnPropertyChanged();
         }
     }
@@ -102,6 +115,6 @@ public class HackboxConfig
 
     public void OnPropertyChanged()
     {
-        PersistenceManager.HackboxConfig = this;
+        //PersistenceManager.HackboxConfig = this;
     }
 }

@@ -29,6 +29,7 @@ MonoBehaviour:
     Parameters:
     - id: 10
     - id: 11
+    - id: 12
   references:
     version: 1
     00000000:
@@ -91,19 +92,24 @@ MonoBehaviour:
           Keys: []
           StyleParameterList:
             Parameters:
-            - id: 12
             - id: 13
+            - id: 14
     0000000B:
       type: {class: StringParameter, ns: Hackbox.Parameters, asm: Hackbox}
       data:
         Name: event
         _value: 
     0000000C:
+      type: {class: BoolParameter, ns: Hackbox.Parameters, asm: Hackbox}
+      data:
+        Name: multiSelect
+        _value: 0
+    0000000D:
       type: {class: StringParameter, ns: Hackbox.Parameters, asm: Hackbox}
       data:
         Name: background
         _value: linear-gradient(180deg, #00B910FF 0%, #285900FF 100%)
-    0000000D:
+    0000000E:
       type: {class: StringParameter, ns: Hackbox.Parameters, asm: Hackbox}
       data:
         Name: border

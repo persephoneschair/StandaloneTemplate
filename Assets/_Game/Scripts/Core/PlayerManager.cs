@@ -9,6 +9,12 @@ public class PlayerManager : SingletonMonoBehaviour<PlayerManager>
 {
     public Players Players = new Players();
 
+    public void CreateNewPlayer(Member mem)
+    {
+        Players.Add(new Player(mem));
+        //Any visual representation happens here
+    }
+
     public Player GetPlayer(Member mem)
     {
         return Players.FirstOrDefault(x => x.Member == mem);
@@ -17,6 +23,11 @@ public class PlayerManager : SingletonMonoBehaviour<PlayerManager>
 
 public class Players : List<Player>
 {
+    public void DeployStateToAllMembers(HackboxManager.InformationState state)
+    {
+        foreach (Player pl in this)
+            pl.DeployStateToMember(state);
+    }
 
     public void ResetPlayerVariables()
     {
@@ -27,18 +38,12 @@ public class Players : List<Player>
 
 public class Player
 {
-    public Player()
-    {
-
-    }
-
     public Player(Member mem)
     {
         Member = mem;
         TwitchName = mem.Twitch == null ? "" : mem.Twitch.UserName;
         TwitchAvatarPath = mem.Twitch == null ? "" : mem.Twitch.AvatarURL;
     }
-
 
     //Player props go here
 
@@ -80,6 +85,11 @@ public class Player
         {
             _points = value;
         }
+    }
+
+    public void DeployStateToMember(HackboxManager.InformationState state)
+    {
+        HackboxManager.Get.DeployInformationState(Member, state);
     }
 
     public void ResetPlayerVariables()

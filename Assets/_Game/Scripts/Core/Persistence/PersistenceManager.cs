@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using QuestionManagement;
 
 public static class PersistenceManager
 {
@@ -13,7 +14,21 @@ public static class PersistenceManager
     public static string localDataPath;
     private const string gameplayConfigExtension = "Gameplay Configs";
     private const string databaseProfileExtension = "Database Profiles";
-    private const string exampleCSV = "";
+    private const string exampleCSV =
+        "Question Type,QuestionText,AnswerText,IsCorrect,HostNotes\n" +
+        "R1,Identify the animals listed in the Bluey opening titles,Bluey,true,Some notes on this question\n" +
+        ",,Snickers,true,\n" +
+        ",,Muffin,true,\n" +
+        ",,My name is \"Winton\",true,\n" +
+        ",,Strawberry,false,\n" +
+        "R2,Identify the genuine British towns,Shitterton,true,Some notes on this question\n" +
+        ",,Fulking Hill,true,\n" +
+        ",,Cocking,true,\n" +
+        ",,Skidmark Lane,false,\n" +
+        ",,Oily Basterd,false,\n" +
+        "R3,Identify the video games,BioShock,true,Some notes on this question\n" +
+        ",,Inception,false,\n" +
+        ",,Untitled Goose Game,true,";
 
     public static List<GameplayConfig> storedGameplayConfigs = new List<GameplayConfig>();
     public static List<DatabaseProfile> storedDatabaseProfiles = new List<DatabaseProfile>();
@@ -25,7 +40,6 @@ public static class PersistenceManager
         set
         {
             _persistentDatabase = value;
-            //WriteDeviceConfig();
         }
     }
 
@@ -36,7 +50,7 @@ public static class PersistenceManager
         set
         {
             _HackboxConfig = value;
-            WriteDeviceConfig();
+            WriteHackboxConfig();
         }
     }
 
@@ -119,9 +133,10 @@ public static class PersistenceManager
             DebugLog.Print("Default Hackbox config restored", DebugLog.StyleOption.Italic, DebugLog.ColorOption.Orange);
 
         JsonConvert.PopulateObject(File.ReadAllText(persistentDataPath + "HackboxConfig.json"), HackboxConfig);
+        var x = HackboxConfig.DefaultGridGap;
     }
 
-    private static void WriteDeviceConfig()
+    public static void WriteHackboxConfig()
     {
         File.WriteAllText(persistentDataPath + "HackboxConfig.json", JsonConvert.SerializeObject(HackboxConfig, Formatting.Indented));
     }

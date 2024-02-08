@@ -19,6 +19,7 @@ public class HackboxConfigManager : SubMenuManager
     public GenericSlider defaultLabelSizeSlider;
     public GenericSlider defaultTextInputSizeSlider;
     public GenericSlider defaultChoicesSizeSlider;
+    public GenericSlider defaultBuzzerSizeSlider;
     public GenericSlider defaultGridColumnsSlider;
     public GenericSlider defaultGridGapSlider;
 
@@ -56,6 +57,7 @@ public class HackboxConfigManager : SubMenuManager
             defaultLabelSizeSlider.slider.value = PersistenceManager.HackboxConfig.DefaultLabelSize;
             defaultTextInputSizeSlider.slider.value = PersistenceManager.HackboxConfig.DefaultTextInputSize;
             defaultChoicesSizeSlider.slider.value = PersistenceManager.HackboxConfig.DefaultChoicesSize;
+            defaultBuzzerSizeSlider.slider.value = PersistenceManager.HackboxConfig.DefaultBuzzerSize;
             defaultGridColumnsSlider.slider.value = PersistenceManager.HackboxConfig.DefaultGridColumns;
             defaultGridGapSlider.slider.value = PersistenceManager.HackboxConfig.DefaultGridGap;
 
@@ -77,6 +79,7 @@ public class HackboxConfigManager : SubMenuManager
         PersistenceManager.HackboxConfig.DefaultLabelSize = (int)defaultLabelSizeSlider.slider.value;
         PersistenceManager.HackboxConfig.DefaultTextInputSize = (int)defaultTextInputSizeSlider.slider.value;
         PersistenceManager.HackboxConfig.DefaultChoicesSize = (int)defaultChoicesSizeSlider.slider.value;
+        PersistenceManager.HackboxConfig.DefaultBuzzerSize = (int)defaultBuzzerSizeSlider.slider.value;
         PersistenceManager.HackboxConfig.DefaultGridColumns = (int)defaultGridColumnsSlider.slider.value;
         PersistenceManager.HackboxConfig.DefaultGridGap = (int)defaultGridGapSlider.slider.value;
 

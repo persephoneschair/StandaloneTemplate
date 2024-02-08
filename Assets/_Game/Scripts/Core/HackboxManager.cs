@@ -250,11 +250,19 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     ///Examples are provided that cover Simple Question, Choices, Grid, Multi-select Choices and Multi-select Grid
     /// </Summary>
     
-    private State SimpleQuestion(string header, string questionlabel, string eventName)
+    private State SimpleQuestion(string header, string questionLabel, string eventName)
     {
         State s = GenerateDefaultState(header);
-        s.Add(Label(questionlabel));
+        s.Add(Label(questionLabel));
         s.Add(TextInput(eventName));
+        return s;
+    }
+
+    private State BuzzerQ(string header, string questionLabel, string eventName)
+    {
+        State s = GenerateDefaultState(header);
+        s.Add(Label(questionLabel));
+        s.Add(Choices(eventName, new string[] { "BUZZ!" }, fontSize: PersistenceManager.HackboxConfig.DefaultBuzzerSize));
         return s;
     }
 
@@ -327,6 +335,7 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     public enum GameplayState
     {
         SimpleQ,
+        BuzzerQ,
         Choices,
         MultiSelectChoices,
         Grid,
@@ -382,6 +391,13 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
             case GameplayState.SimpleQ:
                 s = SimpleQuestion
                     ("Example Question",
+                    question.QuestionText,
+                    stateToDeploy.ToString());
+                break;
+
+            case GameplayState.BuzzerQ:
+                s = BuzzerQ
+                    ("Example Buzzer",
                     question.QuestionText,
                     stateToDeploy.ToString());
                 break;
@@ -475,6 +491,9 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
                 case GameplayState.SimpleQ:
                     break;
 
+                case GameplayState.BuzzerQ:
+                    break;
+
                 case GameplayState.Choices:
                 case GameplayState.Grid:
                     break;
@@ -516,8 +535,8 @@ public class HackboxManager : SingletonMonoBehaviour<HackboxManager>
     [Button(enabledMode: EButtonEnableMode.Playmode)]
     public void TestDeploy()
     {
-        /*foreach (Member m in Host.AllMembers)
-            DeployGameplayState(m, GameplayState.ExampleGridMulti);*/
+        foreach (Member m in Host.AllMembers)
+            DeployGameplayState(m, GameplayState.BuzzerQ, new Question() { QuestionText = "TEST QUESTION"}, "TEST STATE");
     }
 
     #endregion

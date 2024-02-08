@@ -42,6 +42,17 @@ public class HackboxConfig
         }
     }
 
+    private int _defaultBuzzerSize = 30;
+    public int DefaultBuzzerSize
+    {
+        get { return _defaultBuzzerSize; }
+        set
+        {
+            _defaultBuzzerSize = value;
+            OnPropertyChanged();
+        }
+    }
+
     private int _defaultChoicesSize = 18;
     public int DefaultChoicesSize
     {
